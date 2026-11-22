@@ -1,0 +1,19 @@
+# Manipulation de données
+pandas
+pyarrow
+openpyxl
+
+# Données géographiques et cartes
+geopandas
+
+# Graphiques
+matplotlib
+seaborn
+
+# Récupération de données (API, téléchargements)
+requests
+python-dotenv
+
+# Notebook et Git
+jupyter
+nbstripout
