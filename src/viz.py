@@ -60,3 +60,19 @@ def evolution(df, x, y, groupe, titre, xlabel, ylabel, a_souligner=()):
     if a_souligner:
         ax.legend()
     return ax
+
+def nuage_ic(df, x, y, x_bas, x_haut, etiquette, titre, xlabel, ylabel):
+    # barres horizontales = intervalle de confiance à 95 % de x
+    d = df.dropna(subset=[x, y])
+    r = d[x].corr(d[y])
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.errorbar(d[x], d[y], xerr=[d[x] - d[x_bas], d[x_haut] - d[x]], fmt="o", capsize=3)
+    for _, ligne in d.iterrows():
+        ax.annotate(ligne[etiquette], (ligne[x], ligne[y]), fontsize=8, xytext=(5, 4), textcoords="offset points")
+
+    ax.set_title(f"{titre}\n(r = {r:.2f}, n = {len(d)})")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.3)
+    return ax
