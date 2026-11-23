@@ -44,3 +44,19 @@ def nuage(df, x, y, titre, xlabel, ylabel):
     ax.set_ylabel(ylabel)
     ax.grid(alpha=0.3)
     return ax
+
+def evolution(df, x, y, groupe, titre, xlabel, ylabel, a_souligner=()):
+    # les groupes qu'on ne souligne pas restent en gris, en fond
+    fig, ax = plt.subplots(figsize=(9, 5))
+    for nom, d in df.sort_values(x).groupby(groupe):
+        if nom in a_souligner:
+            ax.plot(d[x], d[y], marker="o", linewidth=2, label=nom)
+        else:
+            ax.plot(d[x], d[y], color="lightgrey", linewidth=1)
+    ax.set_title(titre)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(alpha=0.3)
+    if a_souligner:
+        ax.legend()
+    return ax
