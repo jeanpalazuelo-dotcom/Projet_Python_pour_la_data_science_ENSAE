@@ -44,6 +44,6 @@ Les données sont téléchargées automatiquement par les fonctions de `src/data
 
 ## Auteurs
 
-- …
-- …
-- …
+- Palazuelo Jean
+- Ilyan Radjabaly
+
