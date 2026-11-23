@@ -4,8 +4,7 @@ Projet de groupe du cours *Python pour la data science* (ENSAE 2A, 2026-2027).
 
 ## Question
 
-Comment expliquer les écarts de mortalité par cancer du poumon entre départements français : tabac, pollution de l'air ou conditions sociales ?
-
+À âge égal, les départements les plus touchés par le cancer du poumon sont-ils ceux des régions où l'on fumait le plus ?
 ## Installation
 
 ```bash
