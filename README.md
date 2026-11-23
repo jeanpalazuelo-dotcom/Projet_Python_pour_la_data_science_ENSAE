@@ -20,13 +20,11 @@ Ouvrir ensuite `rapport.ipynb` et lancer toutes les cellules.
 
 ## Données
 
-| Données | Source |
-|---|---|
-| Mortalité par cancer du poumon | CépiDc-Inserm, Géodes (Santé publique France) |
-| Ventes de tabac par département | OFDT |
-| Pollution de l'air (PM2.5, NO₂) | Géod'air |
-| Revenu, pauvreté, catégories sociales | INSEE |
-| Contours des départements | IGN / Etalab |
+| Données | Source | Niveau | Années |
+|---|---|---|---|
+| Patients traités pour un cancer du poumon, par classe d'âge | Assurance Maladie, data.ameli.fr (API) | Département et région | 2015-2024 |
+| Tabagisme quotidien des adultes | Santé publique France, Baromètre santé (API Odissé) | Région | 2000-2021 |
+| Contours des départements | france-geojson (IGN) | Département | — |
 
 Les données sont téléchargées automatiquement par les fonctions de `src/data/` et mises en cache dans `data/raw/`.
 
