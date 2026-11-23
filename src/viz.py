@@ -76,3 +76,13 @@ def nuage_ic(df, x, y, x_bas, x_haut, etiquette, titre, xlabel, ylabel):
     ax.set_ylabel(ylabel)
     ax.grid(alpha=0.3)
     return ax
+
+def barres(valeurs, titre, xlabel, ylabel):
+    fig, ax = plt.subplots(figsize=(8, 5))
+    rects = ax.bar(valeurs.index.astype(str), valeurs.values)
+    ax.bar_label(rects, fmt="%.2f")
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_title(titre)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    return ax
