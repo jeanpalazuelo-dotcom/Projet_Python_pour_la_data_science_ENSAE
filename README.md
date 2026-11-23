@@ -1,4 +1,4 @@
-# Tabac, pollution et cancer du poumon en France
+# Tabac et cancer du poumon en France
 
 Projet de groupe du cours *Python pour la data science* (ENSAE 2A, 2026-2027).
 
