@@ -1,57 +1,30 @@
-"""Récupération des effectifs de patients atteints d'un cancer du poumon (Assurance Maladie).
-
-Source : « Cartographie des pathologies et des dépenses », jeu de données `effectifs`
-publié en open data sur data.ameli.fr (API Opendatasoft, sans clé).
-"""
+"""Patients traités pour un cancer du poumon, par département et classe d'âge (data.ameli.fr)."""
 
 from pathlib import Path
 
 import pandas as pd
 import requests
 
-URL_EXPORT = "https://data.ameli.fr/api/explore/v2.1/catalog/datasets/effectifs/exports/csv"
-
-# Code de la pathologie « Cancer bronchopulmonaire actif » dans la nomenclature Ameli
-CODE_CANCER_POUMON = "CAN_BPU_ACT"
-
-FICHIER_CACHE = Path("data/raw/ameli_cancer_poumon.csv")
+URL = "https://data.ameli.fr/api/explore/v2.1/catalog/datasets/effectifs/exports/csv"
+FICHIER = Path("data/raw/ameli_cancer_poumon.csv")
 
 
-def telecharger_cancer_poumon(fichier: Path = FICHIER_CACHE, forcer: bool = False) -> pd.DataFrame:
-    """Télécharge les effectifs de patients par département, année et classe d'âge.
+def telecharger_cancer_poumon(fichier=FICHIER, forcer=False):
+    if not fichier.exists() or forcer:
+        params = {
+            "where": 'top="CAN_BPU_ACT" and sexe=9',  # cancer bronchopulmonaire actif, tous sexes
+            "select": "annee,region,dept,cla_age_5,ntop,npop",
+            "delimiter": ";",
+        }
+        r = requests.get(URL, params=params, timeout=120)
+        r.raise_for_status()
+        fichier.parent.mkdir(parents=True, exist_ok=True)
+        fichier.write_bytes(r.content)
 
-    Le fichier est mis en cache : s'il existe déjà, on le relit sans rappeler l'API
-    (sauf si `forcer=True`).
-
-    Colonnes renvoyées :
-        annee      année (2015 à 2024)
-        region     code région INSEE
-        dept       code département ("999" = ensemble de la région)
-        cla_age_5  classe d'âge de 5 ans ("tsage" = tous âges)
-        ntop       nombre de patients (vide quand l'effectif est trop petit, secret statistique)
-        npop       population couverte par l'Assurance Maladie
-    """
-    if fichier.exists() and not forcer:
-        return lire_cache(fichier)
-
-    parametres = {
-        "where": f'top="{CODE_CANCER_POUMON}" and sexe=9',  # sexe=9 : hommes et femmes
-        "select": "annee,region,dept,cla_age_5,ntop,npop",
-        "delimiter": ";",
-    }
-    reponse = requests.get(URL_EXPORT, params=parametres, timeout=120)
-    reponse.raise_for_status()
-
-    fichier.parent.mkdir(parents=True, exist_ok=True)
-    fichier.write_bytes(reponse.content)
-    return lire_cache(fichier)
-
-
-def lire_cache(fichier: Path) -> pd.DataFrame:
-    """Lit le CSV en gardant les codes géographiques comme du texte ("01" et non 1)."""
+    # on garde les codes en texte sinon "01" devient 1
     return pd.read_csv(
         fichier,
         sep=";",
-        encoding="utf-8-sig",  # le fichier commence par un BOM
+        encoding="utf-8-sig",
         dtype={"region": str, "dept": str, "cla_age_5": str},
     )
