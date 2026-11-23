@@ -11,43 +11,37 @@ def est_metropole(dept: pd.Series) -> pd.Series:
     """Vrai pour les départements de métropole (exclut les DROM « 97x » et les totaux « 999 »)."""
     return ~dept.str.startswith("97") & (dept != TOTAL_REGION)
 
+def taux_cancer(ameli, annees, niveau="departement"):
+    """Taux brut et taux standardisé sur l'âge (pour 100 000 hab.), moyennés sur les années choisies.
+    niveau = "departement" ou "region" (Ameli donne le total de chaque région avec dept = "999").
 
-def taux_cancer(ameli: pd.DataFrame, annees: list[int]) -> pd.DataFrame:
-    """Calcule, pour chaque département, le taux brut et le taux standardisé sur l'âge.
-
-    Les taux sont exprimés pour 100 000 habitants et moyennés sur les années demandées,
-    ce qui lisse les variations aléatoires des petits départements.
-
-    Standardisation directe : on applique les taux par classe d'âge de chaque département
-    à la structure par âge de la France métropolitaine (population de référence).
-    Les effectifs masqués par le secret statistique (ntop vide) sont comptés comme 0 :
-    ils concernent presque uniquement les classes jeunes, où il n'y a quasiment pas de cas.
+    Standardisation directe avec la structure d'âge de la métropole comme référence.
+    Les cases sous secret statistique sont mises à 0 (ce sont surtout des jeunes, quasi aucun cas).
     """
-    df = ameli[est_metropole(ameli["dept"]) & ameli["annee"].isin(annees)].copy()
+    if niveau == "region":
+        garder, cles = ameli["dept"] == "999", ["region"]
+    else:
+        garder, cles = est_metropole(ameli["dept"]), ["dept", "region"]
+
+    df = ameli[garder & ameli["annee"].isin(annees)].copy()
     df["ntop"] = df["ntop"].fillna(0)
 
-    par_age = df[df["cla_age_5"] != TOUS_AGES].copy()
-    par_age["taux_age"] = par_age["ntop"] / par_age["npop"]
+    par_age = df[df["cla_age_5"] != "tsage"].copy()
+    par_age["taux"] = par_age["ntop"] / par_age["npop"]
 
-    # Structure par âge de référence : part de chaque classe d'âge dans la métropole
-    reference = par_age.groupby("cla_age_5")["npop"].sum()
-    reference = reference / reference.sum()
-    par_age["poids_ref"] = par_age["cla_age_5"].map(reference)
+    # même référence pour les deux niveaux, sinon les taux ne seraient pas comparables
+    metro = ameli[est_metropole(ameli["dept"]) & ameli["annee"].isin(annees)]
+    ref = metro[metro["cla_age_5"] != "tsage"].groupby("cla_age_5")["npop"].sum()
+    ref = ref / ref.sum()
+    par_age["contrib"] = par_age["taux"] * par_age["cla_age_5"].map(ref)
+    std = par_age.groupby(cles + ["annee"])["contrib"].sum().rename("taux_std")
 
-    standardise = (
-        par_age.assign(contribution=par_age["taux_age"] * par_age["poids_ref"])
-        .groupby(["dept", "region", "annee"])["contribution"]
-        .sum()
-        .rename("taux_std")
-    )
+    tot = df[df["cla_age_5"] == "tsage"].set_index(cles + ["annee"])
+    brut = (tot["ntop"] / tot["npop"]).rename("taux_brut")
 
-    tous_ages = df[df["cla_age_5"] == TOUS_AGES].set_index(["dept", "region", "annee"])
-    brut = (tous_ages["ntop"] / tous_ages["npop"]).rename("taux_brut")
-
-    taux = pd.concat([brut, standardise], axis=1).reset_index()
-    resultat = taux.groupby(["dept", "region"])[["taux_brut", "taux_std"]].mean() * 100_000
-    return resultat.reset_index()
-
+    taux = pd.concat([brut, std], axis=1).reset_index()
+    taux = taux.groupby(cles)[["taux_brut", "taux_std"]].mean() * 100_000
+    return taux.reset_index()
 
 def tabac_par_region(tabac: pd.DataFrame, annee: int, sexe: str = "Hommes et Femmes") -> pd.DataFrame:
     """Garde la prévalence du tabagisme quotidien d'une année et d'un sexe, une ligne par région."""
