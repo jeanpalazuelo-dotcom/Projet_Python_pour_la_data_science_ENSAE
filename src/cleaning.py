@@ -1,15 +1,10 @@
-"""Nettoyage des données et construction de la table finale par département."""
-
-import geopandas as gpd
 import pandas as pd
 
-TOUS_AGES = "tsage"
-TOTAL_REGION = "999"
 
+def est_metropole(dept):
+    # "999" = total de la région, "97x" = DROM
+    return ~dept.str.startswith("97") & (dept != "999")
 
-def est_metropole(dept: pd.Series) -> pd.Series:
-    """Vrai pour les départements de métropole (exclut les DROM « 97x » et les totaux « 999 »)."""
-    return ~dept.str.startswith("97") & (dept != TOTAL_REGION)
 
 def taux_cancer(ameli, annees, niveau="departement"):
     """Taux brut et taux standardisé sur l'âge (pour 100 000 hab.), moyennés sur les années choisies.
@@ -43,22 +38,14 @@ def taux_cancer(ameli, annees, niveau="departement"):
     taux = taux.groupby(cles)[["taux_brut", "taux_std"]].mean() * 100_000
     return taux.reset_index()
 
-def tabac_par_region(tabac: pd.DataFrame, annee: int, sexe: str = "Hommes et Femmes") -> pd.DataFrame:
-    """Garde la prévalence du tabagisme quotidien d'une année et d'un sexe, une ligne par région."""
-    selection = tabac[(tabac["annee"] == annee) & (tabac["sexe"] == sexe)]
-    colonnes = ["region", "nom_region", "tabac_quotidien", "tabac_ic_bas", "tabac_ic_haut"]
-    return selection[colonnes].rename(
-        columns={c: f"{c}_{annee}" for c in colonnes if c.startswith("tabac")}
-    )
+
+def tabac_par_region(tabac, annee, sexe="Hommes et Femmes"):
+    cols = ["region", "nom_region", "tabac_quotidien", "tabac_ic_bas", "tabac_ic_haut"]
+    df = tabac[(tabac["annee"] == annee) & (tabac["sexe"] == sexe)][cols]
+    return df.rename(columns={c: f"{c}_{annee}" for c in cols if c.startswith("tabac")})
 
 
-def construire_table(
-    cancer: pd.DataFrame, tabac: pd.DataFrame, carte: gpd.GeoDataFrame
-) -> gpd.GeoDataFrame:
-    """Fusionne cancer (département), tabac (région) et contours (département).
-
-    Chaque département reçoit la valeur de tabagisme de sa région.
-    `validate` fait planter la fusion si une clé est dupliquée par erreur.
-    """
+def construire_table(cancer, tabac, carte):
+    # le tabac n'existe qu'au niveau régional : chaque département prend la valeur de sa région
     table = cancer.merge(tabac, on="region", how="left", validate="many_to_one")
     return carte.merge(table, on="dept", how="left", validate="one_to_one")
