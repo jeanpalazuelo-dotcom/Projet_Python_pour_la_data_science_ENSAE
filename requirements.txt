@@ -1,19 +1,7 @@
-# Manipulation de données
-pandas
-pyarrow
-openpyxl
-
-# Données géographiques et cartes
-geopandas
-
-# Graphiques
-matplotlib
-seaborn
-
-# Récupération de données (API, téléchargements)
-requests
-python-dotenv
-
-# Notebook et Git
+pandas>=2.2
+numpy>=2.0
+geopandas>=1.0
+matplotlib>=3.8
+requests>=2.31
 jupyter
 nbstripout
